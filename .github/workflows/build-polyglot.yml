@@ -1,0 +1,55 @@
+name: Build Polyglot Book (Single FEN)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: >-
+            base-devel
+            git
+            mingw-w64-x86_64-gcc
+            make
+
+      - name: Clone polyglot
+        run: git clone https://github.com/ddugovic/polyglot.git
+
+      - name: Build polyglot
+        run: |
+          cd polyglot
+          make
+        shell: msys2 {0}
+
+      - name: Create PGN file from FEN
+        run: |
+          echo "[Event \"Custom Opening\"]" > mybook.pgn
+          echo "[Site \"?\"]" >> mybook.pgn
+          echo "[Date \"2025.09.07\"]" >> mybook.pgn
+          echo "[Round \"?\"]" >> mybook.pgn
+          echo "[White \"?\"]" >> mybook.pgn
+          echo "[Black \"?\"]" >> mybook.pgn
+          echo "[Result \"*\"]" >> mybook.pgn
+          echo "[FEN \"rnbqkbnr/pp1p1ppp/2p1p3/8/3PP3/8/PPP2PPP/RNBQKBNR w KQkq - 0 1\"]" >> mybook.pgn
+          echo "" >> mybook.pgn
+          echo "*" >> mybook.pgn   # Không thêm nước nào, chỉ giữ FEN
+
+      - name: Make book
+        run: |
+          ./polyglot/polyglot.exe make-book -p mybook.pgn -o mybook.bin -max-ply 1
+        shell: msys2 {0}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: single-fen-book
+          path: mybook.bin
