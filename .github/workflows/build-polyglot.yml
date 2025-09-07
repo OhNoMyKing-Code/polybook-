@@ -26,7 +26,7 @@ jobs:
 
       - name: Build polyglot
         run: |
-          cd polyglot
+          cd polyglot/src
           make
         shell: msys2 {0}
 
